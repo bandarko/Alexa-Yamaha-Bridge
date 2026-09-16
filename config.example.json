@@ -1,0 +1,19 @@
+{
+  "FAUXMO": {
+    "ip_address": "auto"
+  },
+  "PLUGINS": {
+    "SimpleHTTPPlugin": {
+      "DEVICES": [
+        {
+          "name": "Yamaha",
+          "port": 12340,
+          "on_cmd": "http://YAMAHA_IP/YamahaExtendedControl/v1/main/setPower?power=on",
+          "off_cmd": "http://YAMAHA_IP/YamahaExtendedControl/v1/main/setPower?power=standby",
+          "use_fake_state": true,
+          "initial_state": "off"
+        }
+      ]
+    }
+  }
+}
