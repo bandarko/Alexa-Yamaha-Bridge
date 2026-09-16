@@ -1,0 +1,15 @@
+[Unit]
+Description=Fauxmo Yamaha Alexa Bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=YOUR_PI_USER
+WorkingDirectory=/home/YOUR_PI_USER/fauxmo-yamaha
+ExecStart=/home/YOUR_PI_USER/fauxmo-yamaha/.venv/bin/fauxmo -c /home/YOUR_PI_USER/fauxmo-yamaha/config.json
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
