@@ -1,51 +1,57 @@
 #!/bin/bash
+set -u
 
-# Yamaha receiver identity.
-# Replace these values with your own receiver's MAC address and device_id.
-MAC="ac:44:f2:85:b5:44"
-DEVICE_ID="AC44F285B544"
+# REQUIRED: replace with the MAC address of your Yamaha receiver.
+YAMAHA_MAC="aa:bb:cc:dd:ee:ff"
 CACHE="/tmp/yamaha-ip"
 
-check_ip() {
-    local ip="$1"
+# Automatically determine the IPv4 /24 network used by the default route.
+LOCAL_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')
+[ -n "${LOCAL_IP:-}" ] || { echo "Could not determine local IPv4 address." >&2; exit 1; }
+SUBNET="${LOCAL_IP%.*}"
+
+check_yamaha() {
+    local ip="${1:-}"
     [ -n "$ip" ] || return 1
-
-    local info
-    info=$(curl -fsS --connect-timeout 1 --max-time 2 \
-        "http://${ip}/YamahaExtendedControl/v1/system/getDeviceInfo" 2>/dev/null) || return 1
-
-    echo "$info" | grep -qi "$DEVICE_ID"
+    curl -fsS --connect-timeout 1 --max-time 2 \
+        "http://${ip}/YamahaExtendedControl/v1/system/getDeviceInfo" >/dev/null 2>&1
 }
 
-# 1. Try the last known address first.
+find_by_mac() {
+    ip neigh 2>/dev/null | awk -v mac="$YAMAHA_MAC" '
+        tolower($0) ~ tolower(mac) && $1 ~ /^[0-9]+\./ {print $1; exit}
+    '
+}
+
+# 1. Fast path: try the last working address.
 if [ -f "$CACHE" ]; then
     IP=$(cat "$CACHE")
-    if check_ip "$IP"; then
+    if check_yamaha "$IP"; then
         echo "$IP"
         exit 0
     fi
 fi
 
-# 2. Look for the Yamaha MAC address in the local neighbour/ARP table.
-IP=$(ip neigh 2>/dev/null | awk -v mac="$MAC" 'tolower($0) ~ tolower(mac) {print $1; exit}')
-if check_ip "$IP"; then
+# 2. Check the current neighbour/ARP table for the configured MAC address.
+IP=$(find_by_mac)
+if [ -n "${IP:-}" ] && check_yamaha "$IP"; then
     echo "$IP" > "$CACHE"
     echo "$IP"
     exit 0
 fi
 
-# 3. Populate the neighbour table with a quick parallel ping sweep.
-# Change 192.168.1 if your LAN uses a different /24 subnet.
+# 3. Populate the neighbour table, then look for the MAC again.
 for i in $(seq 1 254); do
-    ping -c 1 -W 1 "192.168.1.$i" >/dev/null 2>&1 &
+    ping -c 1 -W 1 "${SUBNET}.${i}" >/dev/null 2>&1 &
 done
 wait
 
-IP=$(ip neigh 2>/dev/null | awk -v mac="$MAC" 'tolower($0) ~ tolower(mac) {print $1; exit}')
-if check_ip "$IP"; then
+IP=$(find_by_mac)
+if [ -n "${IP:-}" ] && check_yamaha "$IP"; then
     echo "$IP" > "$CACHE"
     echo "$IP"
     exit 0
 fi
 
+echo "Yamaha not found. Check YAMAHA_MAC and make sure the receiver is reachable on the same LAN." >&2
 exit 1
