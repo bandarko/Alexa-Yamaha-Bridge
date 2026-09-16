@@ -3,13 +3,13 @@
     "ip_address": "auto"
   },
   "PLUGINS": {
-    "SimpleHTTPPlugin": {
+    "CommandLinePlugin": {
       "DEVICES": [
         {
           "name": "Yamaha",
           "port": 12340,
-          "on_cmd": "http://YAMAHA_IP/YamahaExtendedControl/v1/main/setPower?power=on",
-          "off_cmd": "http://YAMAHA_IP/YamahaExtendedControl/v1/main/setPower?power=standby",
+          "on_cmd": "/home/YOUR_PI_USER/fauxmo-yamaha/yamaha-on.sh",
+          "off_cmd": "/home/YOUR_PI_USER/fauxmo-yamaha/yamaha-off.sh",
           "use_fake_state": true,
           "initial_state": "off"
         }
