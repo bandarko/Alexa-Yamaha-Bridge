@@ -109,7 +109,15 @@ This project intentionally pins **Fauxmo 0.8.0**. It is the version used by the 
 
 ## 3. Download the bridge files
 
-From inside `~/fauxmo-yamaha`:
+**You do not need to create the `.sh` files manually or copy their contents from this page.** They are already included in this GitHub repository. The commands below download the complete scripts directly into `~/fauxmo-yamaha`.
+
+Make sure you are in the project directory:
+
+```bash
+cd ~/fauxmo-yamaha
+```
+
+Download all required bridge files:
 
 ```bash
 curl -O https://raw.githubusercontent.com/bandarko/Alexa-Yamaha-Bridge/main/yamaha-ip.sh
@@ -118,27 +126,54 @@ curl -O https://raw.githubusercontent.com/bandarko/Alexa-Yamaha-Bridge/main/yama
 curl -o config.json https://raw.githubusercontent.com/bandarko/Alexa-Yamaha-Bridge/main/config.example.json
 ```
 
-Make the scripts executable:
+What these files do:
+
+- **`yamaha-ip.sh`** - finds the Yamaha receiver on your LAN by its MAC address and returns its current IP address. It also caches the last working address for faster operation.
+- **`yamaha-on.sh`** - calls `yamaha-ip.sh` to find the receiver and then sends the Yamaha Extended Control API power ON command.
+- **`yamaha-off.sh`** - calls `yamaha-ip.sh` to find the receiver and then sends the Yamaha Extended Control API standby/OFF command.
+- **`config.json`** - tells Fauxmo which local scripts to execute when Alexa sends ON or OFF.
+
+Check that the files were downloaded:
 
 ```bash
-chmod +x yamaha-ip.sh yamaha-on.sh yamaha-off.sh
+ls -la ~/fauxmo-yamaha
 ```
+
+You should see at least:
+
+```text
+yamaha-ip.sh
+yamaha-on.sh
+yamaha-off.sh
+config.json
+.venv
+```
+
+Make the three shell scripts executable:
+
+```bash
+chmod +x ~/fauxmo-yamaha/yamaha-ip.sh \
+         ~/fauxmo-yamaha/yamaha-on.sh \
+         ~/fauxmo-yamaha/yamaha-off.sh
+```
+
+At this point the scripts already contain all required code. **Do not create new empty `.sh` files.** The only script you need to edit is `yamaha-ip.sh`, in the next step, to enter your Yamaha's MAC address.
 
 ## 4. Enter your Yamaha MAC address
 
-Open the discovery script:
+Open the already-downloaded discovery script:
 
 ```bash
 nano ~/fauxmo-yamaha/yamaha-ip.sh
 ```
 
-Find:
+Find this line near the top:
 
 ```bash
 YAMAHA_MAC="aa:bb:cc:dd:ee:ff"
 ```
 
-Replace it with the MAC address of your Yamaha receiver, keeping the quotation marks.
+Replace only `aa:bb:cc:dd:ee:ff` with the MAC address of your Yamaha receiver, keeping the quotation marks.
 
 Example format only:
 
@@ -146,7 +181,9 @@ Example format only:
 YAMAHA_MAC="12:34:56:78:9a:bc"
 ```
 
-Save with `Ctrl+O`, Enter, then exit nano with `Ctrl+X`.
+Do not change the rest of the script.
+
+Save with `Ctrl+O`, press Enter, then exit nano with `Ctrl+X`.
 
 No Yamaha IP address needs to be configured.
 
